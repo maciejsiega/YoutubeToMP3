@@ -102,7 +102,7 @@ def download_audio():
 
 def remove_special_characters(text):
     """Remove special characters from text."""
-    allowed_characters = " -[]()&\{\}"
+    allowed_characters = " -[]()&"
     return ''.join(char for char in text if char.isalnum() or char in allowed_characters)
 
 def update_status(message:str):
