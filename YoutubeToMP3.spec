@@ -12,6 +12,7 @@ a = Analysis(
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
+    optimize=0,
 )
 pyz = PYZ(a.pure)
 
@@ -34,5 +35,11 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['con=mp3-flat.ico'],
+    icon=['mp3-flat.ico'],
+)
+app = BUNDLE(
+    exe,
+    name='YoutubeToMP3.app',
+    icon='mp3-flat.ico',
+    bundle_identifier='MaciejSiega',
 )
