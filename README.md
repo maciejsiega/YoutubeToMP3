@@ -21,3 +21,7 @@ Added extra validation for the text functions - to make sure text is being passe
 
 
 Restricted filename to contain only necessary special characters
+
+----------------------------------------------------------------------------------------------
+V1.2 
+Allows to download MP3 from YouTube Music
