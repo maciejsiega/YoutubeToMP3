@@ -35,11 +35,10 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['mp3-flat.ico'],
 )
 app = BUNDLE(
     exe,
     name='YoutubeToMP3.app',
-    icon='mp3-flat.ico',
-    bundle_identifier='MaciejSiega',
+    icon=None,
+    bundle_identifier=None,
 )

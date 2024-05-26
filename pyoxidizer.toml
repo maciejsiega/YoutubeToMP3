@@ -1,0 +1,6 @@
+[package]
+name = "YoutubeToMP3"
+version = "0.1.0"
+
+[script]
+path = "YoutubeToMP3.py"

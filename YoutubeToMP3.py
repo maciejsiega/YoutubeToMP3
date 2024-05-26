@@ -1,5 +1,5 @@
 """
-Version 1.1
+Version 1.2
 """
 
 import os
@@ -130,7 +130,7 @@ def download_single_audio():
 
 def is_valid_youtube_url(url:str):
     """Check if the URL is a valid format youtube link."""
-    pattern = r"(https?://)?(www\.)?(youtube\.com|youtu\.be)/.+"
+    pattern = r"(https?://)?(www\.)?(youtube\.com|youtu\.be|music\.youtube\.com)/.+"  
     return bool(re.match(pattern, url))
 
 # Create the main Tkinter window
