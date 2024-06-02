@@ -1,11 +1,11 @@
 """
-Version 1.2
+Version 1.3
 """
 
 import os
 import tkinter as tk
 from tkinter import filedialog
-from pytube import YouTube
+from pytube import YouTube, Playlist
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_audio
 import ssl
 import eyed3
@@ -52,7 +52,7 @@ def load_links_and_download():
                 url = url.strip()
                 if url:
                     if is_valid_youtube_url(url):
-                        total_urls+=1
+                        total_urls += 1
                         download_queue.put(url)
                     else:
                         logging.error(f"Invalid URL format: {url}")
@@ -67,32 +67,10 @@ def download_audio():
     while not download_queue.empty():
         url = download_queue.get()
         try:
-            update_status("Downloading next audio file")
-            yt = YouTube(url)
-            stream = yt.streams.filter(only_audio=True).first()
-            if stream:
-                filename = f"{yt.author}-{yt.title}"
-                filename = remove_special_characters(filename)
-                audio_file = os.path.join(DOWNLOAD_DIRECTORY, f"{filename}.mp3")
-                temp_video_file = os.path.join(DOWNLOAD_DIRECTORY, 'temp_video')
-
-                stream.download(output_path=DOWNLOAD_DIRECTORY, filename='temp_video')
-
-                if os.path.exists(temp_video_file):
-                    update_status(f"Extracting audio from {filename}...")
-                    extraction_thread = threading.Thread(target=extract_audio, args=(temp_video_file, audio_file, str(yt.author), str(yt.title)))
-                    extraction_thread.start()
-                    extraction_thread.join()  
-                    update_status(f"Downloaded {filename}")
-                    if os.path.exists(temp_video_file):  # Check if the file still exists before removing
-                        os.remove(temp_video_file)  # Remove temporary video file
-                    time.sleep(5)  # 5 seconds delay between downloads
-                else:
-                    logging.error(f"No temporary file found for url: {url}")
-                    update_status(f"No temporary file found for url: {url}")
+            if 'playlist' in url:
+                download_playlist_audio(url)
             else:
-                logging.error(f"No audio stream found for URL: {url}")
-                update_status(f"No audio stream found for URL: {url}")
+                download_single_video_audio(url)
         except Exception as e:
             logging.error(f"Error downloading from URL: {url}. Error: {e}")
             update_status(f"Error downloading from URL: {url}. Error: {e}")
@@ -100,12 +78,55 @@ def download_audio():
             download_queue.task_done()
             time.sleep(2)
 
+def download_single_video_audio(url):
+    """Download audio from a single YouTube video."""
+    try:
+        yt = YouTube(url)
+        stream = yt.streams.filter(only_audio=True).first()
+        if stream:
+            filename = f"{yt.author}-{yt.title}"
+            filename = remove_special_characters(filename)
+            audio_file = os.path.join(DOWNLOAD_DIRECTORY, f"{filename}.mp3")
+            temp_video_file = os.path.join(DOWNLOAD_DIRECTORY, 'temp_video')
+
+            stream.download(output_path=DOWNLOAD_DIRECTORY, filename='temp_video')
+
+            if os.path.exists(temp_video_file):
+                update_status(f"Extracting audio from {filename}...")
+                extraction_thread = threading.Thread(target=extract_audio, args=(temp_video_file, audio_file, str(yt.author), str(yt.title)))
+                extraction_thread.start()
+                extraction_thread.join()
+                update_status(f"Downloaded {filename}")
+                if os.path.exists(temp_video_file):  # Check if the file still exists before removing
+                    os.remove(temp_video_file)  # Remove temporary video file
+                time.sleep(5)  # 5 seconds delay between downloads
+            else:
+                logging.error(f"No temporary file found for url: {url}")
+                update_status(f"No temporary file found for url: {url}")
+        else:
+            logging.error(f"No audio stream found for URL: {url}")
+            update_status(f"No audio stream found for URL: {url}")
+    except Exception as e:
+        logging.error(f"Error downloading from URL: {url}. Error: {e}")
+        update_status(f"Error downloading from URL: {url}. Error: {e}")
+
+def download_playlist_audio(playlist_url):
+    """Download audio from a YouTube playlist."""
+    try:
+        pl = Playlist(playlist_url)
+        for video_url in pl.video_urls:
+            download_queue.put(video_url)
+        download_audio()
+    except Exception as e:
+        logging.error(f"Error downloading playlist: {playlist_url}. Error: {e}")
+        update_status(f"Error downloading playlist: {playlist_url}. Error: {e}")
+
 def remove_special_characters(text):
     """Remove special characters from text."""
     allowed_characters = " -[]()&"
     return ''.join(char for char in text if char.isalnum() or char in allowed_characters)
 
-def update_status(message:str):
+def update_status(message: str):
     """Update status_label with text."""
     status_label.config(text=message)
     root.update()
@@ -128,8 +149,8 @@ def download_single_audio():
     else:
         update_status("URL is empty")
 
-def is_valid_youtube_url(url:str):
-    """Check if the URL is a valid format youtube link."""
+def is_valid_youtube_url(url: str):
+    """Check if the URL is a valid format YouTube link."""
     pattern = r"(https?://)?(www\.)?(youtube\.com|youtu\.be|music\.youtube\.com)/.+"  
     return bool(re.match(pattern, url))
 
@@ -149,7 +170,7 @@ url_label.pack(pady=5)
 url_entry = tk.Entry(root, width=50)
 url_entry.pack(pady=5)
 
-single_download_button = tk.Button(root, text="Download single audio", command=download_single_audio)
+single_download_button = tk.Button(root, text="Download single audio or playlist", command=download_single_audio)
 single_download_button.pack(pady=5)
 
 load_button = tk.Button(root, text="Load links from the file and download", command=load_links_and_download)
